@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Analytics Dashboard</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- ApexCharts -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <!-- Custom JavaScript (embedded) -->
+  
+  <style>
+    :root {
+      --bg-primary: #F8FAFC;
+      --bg-secondary: #FFFFFF;
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --accent-primary: #6366F1;
+      --accent-success: #10B981;
+      --accent-danger: #EF4444;
+      --accent-warning: #F59E0B;
+      --border: #E2E8F0;
+      --shadow: rgba(0, 0, 0, 0.05);
+      --sidebar-bg: #FFFFFF;
+      --card-hover: #F8FAFC;
+      --gradient-1: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      --gradient-success: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+      --gradient-danger: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #5A6778;
+      --bg-secondary: #6B7A8A;
+      --text-primary: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --accent-primary: #A5B4FC;
+      --accent-success: #6EE7B7;
+      --accent-danger: #FCA5A5;
+      --border: #94A3B8;
+      --shadow: rgba(0, 0, 0, 0.15);
+      --sidebar-bg: #6B7A8A;
+      --card-hover: #7B8A9A;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      transition: background-color 0.3s, color 0.3s;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 8px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--gradient-1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    .logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .nav-menu {
+      list-style: none;
+      flex: 1;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .nav-link:hover {
+      background: var(--card-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      background: var(--gradient-1);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .nav-link svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      margin-top: auto;
+    }
+
+    .theme-label {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      background: var(--border);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    [data-theme="dark"] .toggle-switch {
+      background: var(--accent-primary);
+    }
+
+    [data-theme="dark"] .toggle-switch::after {
+      transform: translateX(24px);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 32px;
+      transition: margin-left 0.3s ease;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .page-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .btn-danger {
+      background: var(--gradient-danger);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-edit {
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+      color: #212529;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-delete {
+      background: var(--gradient-danger);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Period Selector */
+    .period-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .period-selector select {
+      border: none;
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Export Buttons */
+    .export-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-export {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      transform: translateY(-2px);
+    }
+
+    .btn-export svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    /* KPI Cards */
+    .kpi-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px var(--shadow);
+    }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kpi-icon.balance { background: var(--gradient-1); }
+    .kpi-icon.income { background: var(--gradient-success); }
+    .kpi-icon.expense { background: var(--gradient-danger); }
+    .kpi-icon.savings { background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%); }
+    .kpi-icon.investment { background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); }
+
+    .kpi-icon svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    .kpi-trend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .kpi-trend.positive {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-success);
+    }
+
+    .kpi-trend.negative {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--accent-danger);
+    }
+
+    .kpi-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    /* Investment Card Styles */
+    .kpi-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-action {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .investment-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-investment {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+      color: var(--accent-primary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-investment:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
+      transform: translateY(-1px);
+    }
+
+    [data-theme="dark"] .btn-investment {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
+      color: #A5B4FC;
+    }
+
+    [data-theme="dark"] .btn-investment:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.35) 100%);
+    }
+
+    /* Charts Section */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .chart-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      animation: fadeInUp 0.5s ease forwards;
+      animation-delay: 0.5s;
+      opacity: 0;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .chart-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .chart-container {
+      height: 300px;
+    }
+
+    .donut-container {
+      height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Transactions Table */
+    .table-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      animation: fadeInUp 0.5s ease forwards;
+      animation-delay: 0.6s;
+      opacity: 0;
+    }
+
+    .table-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .table-filters input,
+    .table-filters select {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .table-filters input:focus,
+    .table-filters select:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .table-filters input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      position: relative;
+      z-index: 1;
+    }
+
+    .data-table thead {
+      position: relative;
+      z-index: 1;
+    }
+
+    .data-table tbody {
+      position: relative;
+      z-index: 1;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .data-table th {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: color 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .data-table th:hover {
+      color: var(--accent-primary);
+    }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .category-badge.income {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-success);
+    }
+
+    .category-badge.expense {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--accent-danger);
+    }
+
+    /* Category-specific colors */
+    .category-badge.Зарплата {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%);
+      color: #059669;
+    }
+
+    .category-badge.Фриланс {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.25) 100%);
+      color: #7C3AED;
+    }
+
+    .category-badge.Подработка {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.25) 100%);
+      color: #7C3AED;
+    }
+
+    .category-badge.Бонус {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%);
+      color: #059669;
+    }
+
+    .category-badge.Подарок {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.25) 100%);
+      color: #DB2777;
+    }
+
+    .category-badge.Инвестиции {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%);
+      color: #D97706;
+    }
+
+    .category-badge.Продукты {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(234, 88, 12, 0.25) 100%);
+      color: #EA580C;
+    }
+
+    .category-badge.Транспорт {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.25) 100%);
+      color: #2563EB;
+    }
+
+    .category-badge.Коммунальные-услуги,
+    .category-badge.Коммунальные услуги {
+      background: linear-gradient(135deg, rgba(100, 116, 139, 0.2) 0%, rgba(71, 85, 105, 0.25) 100%);
+      color: #475569;
+    }
+
+    .category-badge.Развлечения,
+    .category-badge.Кафе-и-рестораны {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.25) 100%);
+      color: #DB2777;
+    }
+
+    .category-badge.Здоровье,
+    .category-badge.Медицина,
+    .category-badge.Лекарства {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.25) 100%);
+      color: #DC2626;
+    }
+
+    .category-badge.Одежда,
+    .category-badge.Покупки {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.2) 0%, rgba(202, 138, 4, 0.25) 100%);
+      color: #CA8A04;
+    }
+
+    .category-badge.Жилье,
+    .category-badge.Аренда {
+      background: linear-gradient(135deg, rgba(180, 83, 9, 0.2) 0%, rgba(146, 64, 14, 0.25) 100%);
+      color: #92400E;
+    }
+
+    .category-badge.Связь,
+    .category-badge.Мобильная-связь {
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.2) 0%, rgba(13, 148, 136, 0.25) 100%);
+      color: #0D9488;
+    }
+
+    .category-badge.Образование {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.25) 100%);
+      color: #4F46E5;
+    }
+
+    .category-badge.Кино {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.25) 100%);
+      color: #DB2777;
+    }
+
+    .category-badge.Такси {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.25) 100%);
+      color: #2563EB;
+    }
+
+    .category-badge.Интернет {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.25) 100%);
+      color: #4F46E5;
+    }
+
+    /* Dark theme category badges */
+    [data-theme="dark"] .category-badge.Зарплата {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.35) 100%);
+      color: #6EE7B7;
+    }
+
+    [data-theme="dark"] .category-badge.Фриланс,
+    [data-theme="dark"] .category-badge.Подработка {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(124, 58, 237, 0.35) 100%);
+      color: #C4B5FD;
+    }
+
+    [data-theme="dark"] .category-badge.Бонус {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.35) 100%);
+      color: #6EE7B7;
+    }
+
+    [data-theme="dark"] .category-badge.Подарок {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.3) 0%, rgba(219, 39, 119, 0.35) 100%);
+      color: #F9A8D4;
+    }
+
+    [data-theme="dark"] .category-badge.Инвестиции {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.35) 100%);
+      color: #FCD34D;
+    }
+
+    [data-theme="dark"] .category-badge.Продукты {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.3) 0%, rgba(234, 88, 12, 0.35) 100%);
+      color: #FDBA74;
+    }
+
+    [data-theme="dark"] .category-badge.Транспорт,
+    [data-theme="dark"] .category-badge.Такси {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.35) 100%);
+      color: #93C5FD;
+    }
+
+    [data-theme="dark"] .category-badge.Коммунальные-услуги,
+    [data-theme="dark"] .category-badge.Коммунальные услуги,
+    [data-theme="dark"] .category-badge.Интернет {
+      background: linear-gradient(135deg, rgba(148, 163, 184, 0.3) 0%, rgba(100, 116, 139, 0.35) 100%);
+      color: #CBD5E1;
+    }
+
+    [data-theme="dark"] .category-badge.Развлечения,
+    [data-theme="dark"] .category-badge.Кафе-и-рестораны,
+    [data-theme="dark"] .category-badge.Кино {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.3) 0%, rgba(219, 39, 119, 0.35) 100%);
+      color: #F9A8D4;
+    }
+
+    [data-theme="dark"] .category-badge.Здоровье,
+    [data-theme="dark"] .category-badge.Медицина,
+    [data-theme="dark"] .category-badge.Лекарства {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.35) 100%);
+      color: #FCA5A5;
+    }
+
+    [data-theme="dark"] .category-badge.Одежда,
+    [data-theme="dark"] .category-badge.Покупки {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.35) 100%);
+      color: #FDE047;
+    }
+
+    [data-theme="dark"] .category-badge.Жилье,
+    [data-theme="dark"] .category-badge.Аренда {
+      background: linear-gradient(135deg, rgba(180, 83, 9, 0.3) 0%, rgba(146, 64, 14, 0.35) 100%);
+      color: #FCD34D;
+    }
+
+    [data-theme="dark"] .category-badge.Связь,
+    [data-theme="dark"] .category-badge.Мобильная-связь {
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.3) 0%, rgba(13, 148, 136, 0.35) 100%);
+      color: #5EEAD4;
+    }
+
+    [data-theme="dark"] .category-badge.Образование {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(79, 70, 229, 0.35) 100%);
+      color: #A5B4FC;
+    }
+
+    .amount-cell {
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .amount-cell.income {
+      color: var(--accent-success);
+    }
+
+    .amount-cell.expense {
+      color: var(--accent-danger);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .pagination-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-page {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-page:hover:not(:disabled) {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .btn-page:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-page.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    /* Mobile Menu Button */
+    .mobile-menu-btn {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 200;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-menu-btn svg {
+      width: 24px;
+      height: 24px;
+      color: var(--text-primary);
+    }
+
+    /* Hidden sections */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--text-secondary);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+      flex: 1;
+      justify-content: center;
+    }
+
+    .radio-group label:hover {
+      transform: scale(1.02);
+    }
+
+    .radio-group label.income {
+      background-color: rgba(16, 185, 129, 0.1);
+      border-color: var(--accent-success);
+      color: var(--accent-success);
+    }
+
+    .radio-group label.expense {
+      background-color: rgba(239, 68, 68, 0.1);
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
+    }
+
+    .radio-group input[type="radio"] {
+      width: auto;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .form-actions .btn-primary,
+    .form-actions .btn-secondary {
+      flex: 1;
+    }
+
+    /* Analytics Section */
+    .analytics-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    /* Transaction actions in table */
+    .transaction-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Investment transfer styling */
+    .investment-transfer {
+      font-style: italic;
+      opacity: 0.8;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+      .analytics-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 80px 16px 24px;
+      }
+      .mobile-menu-btn {
+        display: flex;
+      }
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+      .period-selector {
+        width: 100%;
+      }
+      .table-filters {
+        flex-direction: column;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Heatmap Legend */
+    .heatmap-legend {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 16px;
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    /* Language selector */
+    .language-selector {
+      position: absolute;
+      background-color: var(--bg-secondary);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      width: 120px;
+      padding: 10px 0;
+      display: none;
+    }
+
+    .language-selector.show {
+      display: block;
+    }
+
+    .language-option {
+      padding: 8px 15px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      text-align: left;
+    }
+
+    .language-option:hover {
+      background-color: var(--card-hover);
+    }
+
+    .globe-icon {
+      cursor: pointer;
+      font-size: 20px;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  </button>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <span class="logo-text">FinApp</span>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a class="nav-link active" data-section="dashboard" onclick="showSection('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Дашборд
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-section="transactions" onclick="showSection('transactions')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Транзакции
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-section="analytics" onclick="showSection('analytics')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            </svg>
+            Аналитика
+          </a>
+        </li>
+      </ul>
+
+      <div class="theme-toggle">
+        <span class="theme-label">Тёмная тема</span>
+        <div class="toggle-switch" onclick="toggleTheme()"></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section class="section active" id="dashboard">
+        <div class="header">
+          <h1 class="page-title">Финансовый обзор</h1>
+          <div class="header-actions">
+            <button class="btn-primary" onclick="openAddTransactionModal()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Добавить транзакцию
+            </button>
+            <div class="period-selector">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <select id="periodSelect" onchange="updateDashboard()">
+                <option value="current_month">Текущий месяц</option>
+                <option value="last_month">Прошлый месяц</option>
+                <option value="last_3_months" selected>Последние 3 месяца</option>
+                <option value="current_year">Текущий год</option>
+                <option value="all_time">Всё время</option>
+              </select>
+            </div>
+            <div class="export-buttons">
+              <button class="btn-export" onclick="exportToExcel()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                Excel
+              </button>
+              <button class="btn-export" onclick="exportToPDF()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="dashboard-grid">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon balance">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+              </div>
+              <div class="kpi-trend positive" id="balanceTrend">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                </svg>
+                <span id="balanceTrendValue">+0%</span>
+              </div>
+            </div>
+            <div class="kpi-label">Общий баланс</div>
+            <div class="kpi-value" id="totalBalance">0</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon income">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="19" x2="12" y2="5"/>
+                  <polyline points="5 12 12 5 19 12"/>
+                </svg>
+              </div>
+              <div class="kpi-trend positive" id="incomeTrend">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                </svg>
+                <span id="incomeTrendValue">+0%</span>
+              </div>
+            </div>
+            <div class="kpi-label">Доходы</div>
+            <div class="kpi-value" id="totalIncome">0</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon expense">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <polyline points="19 12 12 19 5 12"/>
+                </svg>
+              </div>
+              <div class="kpi-trend negative" id="expenseTrend">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+                </svg>
+                <span id="expenseTrendValue">-0%</span>
+              </div>
+            </div>
+            <div class="kpi-label">Расходы</div>
+            <div class="kpi-value" id="totalExpense">0</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon savings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-label">Сбережения</div>
+            <div class="kpi-value" id="totalSavings">0</div>
+          </div>
+
+          <div class="kpi-card" id="investmentCard">
+            <div class="kpi-header">
+              <div class="kpi-icon investment">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <div class="kpi-actions">
+                </button>
+              </div>
+            </div>
+            <div class="kpi-label">Инвестиции</div>
+            <div class="kpi-value" id="totalInvestments">0</div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Динамика доходов и расходов</h3>
+            </div>
+            <div class="chart-container" id="barChart"></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Структура расходов</h3>
+            </div>
+            <div class="donut-container" id="donutChart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Transactions Section -->
+      <section class="section" id="transactions">
+        <div class="header">
+          <h1 class="page-title">Транзакции</h1>
+          <div class="header-actions">
+            <button class="btn-primary" onclick="openAddTransactionModal()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Добавить транзакцию
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-filters">
+            <input type="text" id="searchInput" placeholder="Поиск по описанию..." oninput="filterTransactions()">
+            <select id="typeFilter" onchange="filterTransactions()">
+              <option value="all">Все типы</option>
+              <option value="income">Доходы</option>
+              <option value="expense">Расходы</option>
+              <option value="transfer">Переводы</option>
+            </select>
+            <select id="categoryFilter" onchange="filterTransactions()">
+              <option value="all">Все категории</option>
+            </select>
+            <input type="date" id="dateFilterStart" onchange="filterTransactions()" placeholder="От">
+            <input type="date" id="dateFilterEnd" onchange="filterTransactions()" placeholder="До">
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th onclick="sortTable('date')" data-sort="date">Дата</th>
+                <th onclick="sortTable('description')" data-sort="description">Описание</th>
+                <th onclick="sortTable('category')" data-sort="category">Категория</th>
+                <th onclick="sortTable('amount')" data-sort="amount">Сумма</th>
+                <th onclick="sortTable('type')" data-sort="type">Тип</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsBody">
+            </tbody>
+          </table>
+
+          <div class="pagination">
+            <div class="pagination-info" id="paginationInfo">Показано 0 из 0 записей</div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analytics Section -->
+      <section class="section" id="analytics">
+        <div class="header">
+          <h1 class="page-title">Аналитика</h1>
+          <div class="header-actions">
+            <div class="period-selector">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <select id="analyticsPeriodSelect" onchange="updateAnalytics()">
+                <option value="current_year" selected>Текущий год</option>
+                <option value="last_year">Прошлый год</option>
+                <option value="all_time">Всё время</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Тренды за периоды</h3>
+            </div>
+            <div class="chart-container" id="lineChart"></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Доходы по категориям</h3>
+            </div>
+            <div class="donut-container" id="incomeDonutChart"></div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3 class="chart-title">Расходы по месяцам</h3>
+            </div>
+            <div class="chart-container" id="areaChart"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add/Edit Transaction Modal -->
+  <div class="modal-overlay" id="transactionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Добавить транзакцию</h2>
+        <button class="modal-close" onclick="closeTransactionModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="transactionForm">
+        <input type="hidden" id="transactionId">
+        
+        <div class="form-group">
+          <label>Тип:</label>
+          <div class="radio-group">
+            <label class="income">
+              <input type="radio" name="type" value="income" checked>
+              Доход
+            </label>
+            <label class="expense">
+              <input type="radio" name="type" value="expense">
+              Расход
+            </label>
+            <label class="transfer">
+              <input type="radio" name="type" value="transfer">
+              Перевод
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="amount">Сумма:</label>
+          <input type="number" id="amount" min="0.01" step="0.01" placeholder="Введите сумму" required>
+        </div>
+
+        <div class="form-group">
+          <label for="category">Категория:</label>
+          <select id="category">
+          </select>
+        </div>
+
+        <div class="form-group" id="transferSourceGroup" style="display: none;">
+          <label for="transferSource">Откуда:</label>
+          <select id="transferSource">
+            <option value="Доход">Доход</option>
+            <option value="Сбережения">Сбережения</option>
+            <option value="Инвестиции">Инвестиции</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="transferDestinationGroup" style="display: none;">
+          <label for="transferDestination">Куда:</label>
+          <select id="transferDestination">
+            <option value="Доход">Доход</option>
+            <option value="Инвестиции">Инвестиции</option>
+            <option value="Сбережения">Сбережения</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Описание:</label>
+          <input type="text" id="description" placeholder="Краткое описание (необязательно)">
+        </div>
+
+        <div class="form-group">
+          <label for="date">Дата:</label>
+          <input type="date" id="date" required>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Сохранить</button>
+          <button type="button" class="btn-secondary" onclick="closeTransactionModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ==================== DATA ====================
+    const incomeCategories = ['Зарплата', 'Бизнес', 'Подработка', 'Другое'];
+    const expenseCategories = ['Продукты', 'Транспорт', 'Жилье', 'Развлечения', 'Здоровье', 'Образование', 'Покупки', 'Коммунальные', 'Рестораны', 'Путешествия', 'Другое'];
+    const transferCategories = ['Инвестиции', 'Сбережения', 'Другое'];
+
+    // Transaction class
+    class Transaction {
+      constructor(id, type, amount, category, description, date) {
+        this.id = id;
+        this.type = type;
+        this.amount = amount;
+        this.category = category;
+        this.description = description || '';
+        this.date = date;
+      }
+    }
+
+    // Global storage
+    let transactions = [];
+    const STORAGE_KEY = 'finance_transactions';
+
+    // Sample data for demonstration
+    const SAMPLE_TRANSACTIONS = [
+      { id: 1, date: '2026-02-13', description: 'Зарплата', amount: 50000, type: 'income', category: 'Зарплата' },
+      { id: 2, date: '2026-02-12', description: 'Продукты', amount: 3500, type: 'expense', category: 'Продукты' },
+      { id: 3, date: '2026-02-11', description: 'Транспорт', amount: 150, type: 'expense', category: 'Транспорт' },
+      { id: 4, date: '2026-02-10', description: 'Фриланс', amount: 15000, type: 'income', category: 'Фриланс' },
+      { id: 5, date: '2026-02-09', description: 'Коммунальные услуги', amount: 4500, type: 'expense', category: 'Коммунальные услуги' },
+      { id: 6, date: '2026-02-08', description: 'Кафе и рестораны', amount: 2200, type: 'expense', category: 'Развлечения' },
+      { id: 7, date: '2026-02-07', description: 'Интернет', amount: 800, type: 'expense', category: 'Коммунальные услуги' },
+      { id: 8, date: '2026-02-06', description: 'Подработка', amount: 8000, type: 'income', category: 'Фриланс' },
+      { id: 9, date: '2026-02-05', description: 'Лекарства', amount: 1200, type: 'expense', category: 'Здоровье' },
+      { id: 10, date: '2026-02-04', description: 'Такси', amount: 450, type: 'expense', category: 'Транспорт' },
+      { id: 11, date: '2026-02-03', description: 'Аренда', amount: 25000, type: 'expense', category: 'Жилье' },
+      { id: 12, date: '2026-02-02', description: 'Бонус', amount: 10000, type: 'income', category: 'Зарплата' },
+      { id: 13, date: '2026-02-01', description: 'Одежда', amount: 5500, type: 'expense', category: 'Покупки' },
+      { id: 14, date: '2026-01-31', description: 'Продукты', amount: 4200, type: 'expense', category: 'Продукты' },
+      { id: 15, date: '2026-01-30', description: 'Зарплата', amount: 50000, type: 'income', category: 'Зарплата' },
+      { id: 16, date: '2026-01-29', description: 'Мобильная связь', amount: 600, type: 'expense', category: 'Связь' },
+      { id: 17, date: '2026-01-28', description: 'Кино', amount: 800, type: 'expense', category: 'Развлечения' },
+      { id: 18, date: '2026-01-27', description: 'Фриланс', amount: 12000, type: 'income', category: 'Фриланс' },
+      { id: 19, date: '2026-01-26', description: 'Продукты', amount: 3100, type: 'expense', category: 'Продукты' },
+      { id: 20, date: '2026-01-25', description: 'Такси', amount: 380, type: 'expense', category: 'Транспорт' }
+    ];
+
+    // Load transactions from localStorage
+    function loadTransactions() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          transactions = JSON.parse(stored);
+        } else {
+          // Initialize with sample data for demonstration
+          transactions = SAMPLE_TRANSACTIONS;
+          saveTransactions();
+        }
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        transactions = SAMPLE_TRANSACTIONS;
+      }
+    }
+
+    // Save transactions to localStorage
+    function saveTransactions() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      } catch (error) {
+        console.error('Error saving transactions:', error);
+      }
+    }
+
+    // Investments management
+    const INVESTMENTS_KEY = 'finance_investments';
+    let investments = [];
+
+    // Savings management
+    const SAVINGS_KEY = 'finance_savings';
+    let savings = [];
+
+    // Load investments from localStorage
+    function loadInvestments() {
+      try {
+        const stored = localStorage.getItem(INVESTMENTS_KEY);
+        if (stored) {
+          investments = JSON.parse(stored);
+        } else {
+          investments = [];
+        }
+      } catch (error) {
+        console.error('Error loading investments:', error);
+        investments = [];
+      }
+    }
+
+    // Load savings from localStorage
+    function loadSavings() {
+      try {
+        const stored = localStorage.getItem(SAVINGS_KEY);
+        if (stored) {
+          savings = JSON.parse(stored);
+        } else {
+          savings = [];
+        }
+      } catch (error) {
+        console.error('Error loading savings:', error);
+        savings = [];
+      }
+    }
+
+    // Save investments to localStorage
+    function saveInvestments() {
+      try {
+        localStorage.setItem(INVESTMENTS_KEY, JSON.stringify(investments));
+      } catch (error) {
+        console.error('Error saving investments:', error);
+      }
+    }
+
+    // Save savings to localStorage
+    function saveSavings() {
+      try {
+        localStorage.setItem(SAVINGS_KEY, JSON.stringify(savings));
+      } catch (error) {
+        console.error('Error saving savings:', error);
+      }
+    }
+
+    // Add investment (moves from income to investments - internal transfer, no expense transaction created)
+    function addInvestment(amount, description = 'Инвестиция') {
+      const investmentAmount = parseFloat(amount);
+
+      if (investmentAmount <= 0) {
+        alert('Введите корректную сумму');
+        return;
+      }
+
+      // Add to investments array (internal transfer, balance stays the same)
+      const investment = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        description: description,
+        amount: investmentAmount,
+        originalType: 'income'
+      };
+      investments.push(investment);
+      saveInvestments();
+
+      // Update dashboard
+      updateDashboard();
+    }
+
+    // Transfer funds from income to investments (internal transfer)
+    function transferToInvestments() {
+      const amount = prompt('Введите сумму для перевода в инвестиции:');
+      if (amount && parseFloat(amount) > 0) {
+        const description = prompt('Введите описание перевода:', 'Перевод в инвестиции');
+        
+        // Create an investment transfer transaction (expense type but marked as internal transfer)
+        const investmentTransfer = {
+          id: Date.now(),
+          date: new Date().toISOString().split('T')[0],
+          description: description || 'Перевод в инвестиции',
+          amount: parseFloat(amount),
+          type: 'expense',
+          category: 'Инвестиции',
+          isInvestmentTransfer: true  // Flag to exclude from expense calculations
+        };
+
+        // Add the investment transfer to transactions
+        transactions.push(investmentTransfer);
+        saveTransactions();
+        
+        updateDashboard();
+      }
+    }
+
+    // Return funds from investments back to income (internal transfer)
+    function transferFromInvestments() {
+      const amount = prompt('Введите сумму для возврата из инвестиций:');
+      if (amount && parseFloat(amount) > 0) {
+        const description = prompt('Введите описание возврата:', 'Возврат из инвестиций');
+        
+        // Create an investment return transaction (income type but marked as internal return)
+        const investmentReturn = {
+          id: Date.now(),
+          date: new Date().toISOString().split('T')[0],
+          description: description || 'Возврат из инвестиций',
+          amount: parseFloat(amount),
+          type: 'income',
+          category: 'Инвестиции',
+          isInvestmentReturn: true  // Flag to exclude from income calculations
+        };
+
+        // Add the investment return to transactions
+        transactions.push(investmentReturn);
+        saveTransactions();
+        
+        updateDashboard();
+      }
+    }
+
+    // Convert investment back to income (shown in investments block only, not counted in income stats)
+    function convertInvestmentToIncome() {
+      if (investments.length === 0) {
+        alert('Нет инвестиций для конвертации');
+        return;
+      }
+
+      const totalInvestments = investments.reduce((sum, inv) => sum + inv.amount, 0);
+      const confirmText = `Конвертировать все инвестиции (${formatCurrency(totalInvestments)}) в доход?\n\nИнвестиции будут удалены из блока инвестиций.`;
+
+      if (confirm(confirmText)) {
+        // Create income transaction WITHOUT adding to stats as income
+        const incomeTransaction = {
+          id: Date.now(),
+          date: new Date().toISOString().split('T')[0],
+          description: 'Возврат инвестиций',
+          amount: totalInvestments,
+          type: 'income',
+          category: 'Инвестиции',
+          isInvestmentReturn: true // Flag to exclude from income stats
+        };
+        transactions.push(incomeTransaction);
+        saveTransactions();
+
+        // Clear investments
+        investments = [];
+        saveInvestments();
+
+        updateDashboard();
+        alert('Инвестиции конвертированы в доход');
+      }
+    }
+
+    // Show investment modal
+    function showInvestmentModal() {
+      const amount = prompt('Введите сумму для инвестирования:');
+      if (amount && parseFloat(amount) > 0) {
+        addInvestment(amount, 'Инвестиция');
+      }
+    }
+
+    // Format currency (without currency symbol)
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('ru-RU', { 
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    // ==================== NAVIGATION ====================
+    function showSection(sectionId) {
+      // Update nav links
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.section === sectionId) {
+          link.classList.add('active');
+        }
+      });
+
+      // Update sections
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+
+      // Update content
+      if (sectionId === 'dashboard') {
+        updateDashboard();
+      } else if (sectionId === 'transactions') {
+        filterTransactions();
+        updateCategoryFilter();
+      } else if (sectionId === 'analytics') {
+        updateAnalytics();
+      }
+
+      // Close mobile sidebar
+      document.getElementById('sidebar').classList.remove('open');
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      if (body.getAttribute('data-theme') === 'dark') {
+        body.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+      } else {
+        body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      }
+      updateChartsTheme();
+    }
+
+    // ==================== TRANSACTIONS ====================
+    function openAddTransactionModal() {
+      document.getElementById('modalTitle').textContent = 'Добавить транзакцию';
+      document.getElementById('transactionForm').reset();
+      document.getElementById('transactionId').value = '';
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+      updateCategoryOptions();
+      document.getElementById('transactionModal').classList.add('active');
+    }
+
+    function openEditTransactionModal(id) {
+      const transaction = transactions.find(t => t.id === id);
+      if (!transaction) return;
+
+      document.getElementById('modalTitle').textContent = 'Редактировать транзакцию';
+      document.getElementById('transactionId').value = transaction.id;
+      document.getElementById('amount').value = transaction.amount;
+      document.getElementById('description').value = transaction.description;
+      document.getElementById('date').value = transaction.date;
+      
+      document.querySelectorAll('input[name="type"]').forEach(radio => {
+        radio.checked = radio.value === transaction.type;
+      });
+      
+      updateCategoryOptions();
+      document.getElementById('category').value = transaction.category;
+      
+      // Set transfer source and destination if they exist
+      if (document.getElementById('transferSource')) {
+        document.getElementById('transferSource').value = transaction.transferSource || 'Доход';
+      }
+      if (document.getElementById('transferDestination')) {
+        document.getElementById('transferDestination').value = transaction.transferDestination || 'Инвестиции';
+      }
+      
+      document.getElementById('transactionModal').classList.add('active');
+    }
+
+    function closeTransactionModal() {
+      document.getElementById('transactionModal').classList.remove('active');
+    }
+
+    function updateCategoryOptions() {
+      const type = document.querySelector('input[name="type"]:checked').value;
+      const categorySelect = document.getElementById('category');
+      const transferSourceGroup = document.getElementById('transferSourceGroup');
+      const transferDestinationGroup = document.getElementById('transferDestinationGroup');
+      let categories;
+
+      // Show/hide transfer source and destination fields
+      if (type === 'transfer') {
+        transferSourceGroup.style.display = 'block';
+        transferDestinationGroup.style.display = 'block';
+        categories = transferCategories;
+        // Disable category field for transfers
+        categorySelect.disabled = true;
+        categorySelect.style.opacity = '0.5';
+        categorySelect.style.backgroundColor = '#e0e0e0';
+      } else {
+        transferSourceGroup.style.display = 'none';
+        transferDestinationGroup.style.display = 'none';
+        // Enable category field for income/expense
+        categorySelect.disabled = false;
+        categorySelect.style.opacity = '1';
+        categorySelect.style.backgroundColor = '';
+        if (type === 'income') {
+          categories = incomeCategories;
+        } else {
+          categories = expenseCategories;
+        }
+      }
+      
+      categorySelect.innerHTML = '';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    function updateCategoryFilter() {
+      const categoryFilter = document.getElementById('categoryFilter');
+      const allCategories = [...new Set(transactions.map(t => t.category))];
+      
+      categoryFilter.innerHTML = '<option value="all">Все категории</option>';
+      allCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categoryFilter.appendChild(option);
+      });
+    }
+
+    // Form submit
+    document.getElementById('transactionForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('transactionId').value;
+      const type = document.querySelector('input[name="type"]:checked').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value;
+      const date = document.getElementById('date').value;
+      const transferSource = document.getElementById('transferSource') ? document.getElementById('transferSource').value : '';
+      const transferDestination = document.getElementById('transferDestination') ? document.getElementById('transferDestination').value : '';
+
+      if (!amount || amount <= 0) {
+        alert('Пожалуйста, введите корректную сумму');
+        return;
+      }
+
+      if (id) {
+        // Edit existing transaction
+        const index = transactions.findIndex(t => t.id === parseInt(id));
+        if (index !== -1) {
+          const updatedTransaction = new Transaction(
+            parseInt(id),
+            type,
+            amount,
+            category,
+            description,
+            date
+          );
+          updatedTransaction.transferSource = transferSource;
+          updatedTransaction.transferDestination = transferDestination;
+          transactions[index] = updatedTransaction;
+        }
+      } else {
+        // Add new transaction
+        const newTransaction = new Transaction(
+          Date.now(),
+          type,
+          amount,
+          category,
+          description,
+          date
+        );
+        newTransaction.transferSource = transferSource;
+        newTransaction.transferDestination = transferDestination;
+        transactions.push(newTransaction);
+
+        // Handle transfer to investments
+        if (type === 'transfer' && transferDestination === 'Инвестиции') {
+          investments.push({
+            id: newTransaction.id,
+            date: date,
+            description: description || 'Перевод в инвестиции',
+            amount: amount,
+            originalType: 'transfer',
+            source: transferSource
+          });
+          saveInvestments();
+        }
+        
+        // Handle transfer to savings
+        if (type === 'transfer' && transferDestination === 'Сбережения') {
+          savings.push({
+            id: newTransaction.id,
+            date: date,
+            description: description || 'Перевод в сбережения',
+            amount: amount,
+            originalType: 'transfer',
+            source: transferSource
+          });
+          saveSavings();
+        }
+
+        // Handle transfer from Income to Savings or Investments - reduce income
+        if (type === 'transfer' && transferSource === 'Доход' && 
+            (transferDestination === 'Сбережения' || transferDestination === 'Инвестиции')) {
+          // Add income transaction with negative amount (as source of transfer) to reduce income
+          const incomeTransferSource = new Transaction(
+            Date.now() + 1, // Use different ID
+            'income',
+            amount,
+            'Перевод',
+            description || `Перевод из дохода в ${transferDestination}`,
+            date
+          );
+          incomeTransferSource.transferSource = 'Доход';
+          incomeTransferSource.transferDestination = transferDestination;
+          incomeTransferSource.isIncomeTransferSource = true; // Flag to subtract from income
+          transactions.push(incomeTransferSource);
+        }
+        
+        // Handle transfer from investments (reduce investment amount and add to income)
+        if (type === 'transfer' && transferSource === 'Инвестиции' && transferDestination === 'Доход') {
+          // Find and reduce the investment by amount
+          let remainingAmount = amount;
+          for (let i = investments.length - 1; i >= 0 && remainingAmount > 0; i--) {
+            if (investments[i].amount <= remainingAmount) {
+              remainingAmount -= investments[i].amount;
+              investments.splice(i, 1);
+            } else {
+              investments[i].amount -= remainingAmount;
+              remainingAmount = 0;
+            }
+          }
+          saveInvestments();
+          
+          // Add income transaction to maintain balance (will be shown as Return in UI)
+          const incomeTransaction = new Transaction(
+            Date.now() + 1,
+            'income',
+            amount,
+            'Перевод',
+            description || 'Перевод из инвестиций',
+            date
+          );
+          incomeTransaction.transferSource = 'Инвестиции';
+          incomeTransaction.transferDestination = 'Доход';
+          transactions.push(incomeTransaction);
+        }
+        
+        // Handle transfer from savings (reduce savings amount and add to income)
+        if (type === 'transfer' && transferSource === 'Сбережения' && transferDestination === 'Доход') {
+          // Find and reduce the savings by amount
+          let remainingAmount = amount;
+          for (let i = savings.length - 1; i >= 0 && remainingAmount > 0; i--) {
+            if (savings[i].amount <= remainingAmount) {
+              remainingAmount -= savings[i].amount;
+              savings.splice(i, 1);
+            } else {
+              savings[i].amount -= remainingAmount;
+              remainingAmount = 0;
+            }
+          }
+          saveSavings();
+          
+          // Add income transaction to maintain balance (will be shown as Return in UI)
+          const incomeTransaction = new Transaction(
+            Date.now() + 2,
+            'income',
+            amount,
+            'Перевод',
+            description || 'Перевод из сбережений',
+            date
+          );
+          incomeTransaction.transferSource = 'Сбережения';
+          incomeTransaction.transferDestination = 'Доход';
+          transactions.push(incomeTransaction);
+        }
+        
+        // Handle transfer from investments (not to income - just remove from investments)
+        if (type === 'transfer' && transferSource === 'Инвестиции' && transferDestination !== 'Доход') {
+          // Find and reduce the investment by amount
+          let remainingAmount = amount;
+          for (let i = investments.length - 1; i >= 0 && remainingAmount > 0; i--) {
+            if (investments[i].amount <= remainingAmount) {
+              remainingAmount -= investments[i].amount;
+              investments.splice(i, 1);
+            } else {
+              investments[i].amount -= remainingAmount;
+              remainingAmount = 0;
+            }
+          }
+          saveInvestments();
+        }
+        
+        // Handle transfer from savings (not to income - just remove from savings)
+        if (type === 'transfer' && transferSource === 'Сбережения' && transferDestination !== 'Доход') {
+          // Find and reduce the savings by amount
+          let remainingAmount = amount;
+          for (let i = savings.length - 1; i >= 0 && remainingAmount > 0; i--) {
+            if (savings[i].amount <= remainingAmount) {
+              remainingAmount -= savings[i].amount;
+              savings.splice(i, 1);
+            } else {
+              savings[i].amount -= remainingAmount;
+              remainingAmount = 0;
+            }
+          }
+          saveSavings();
+        }
+      }
+
+      saveTransactions();
+      closeTransactionModal();
+      filterTransactions();
+      updateDashboard();
+    });
+
+    // Type change listener
+    document.querySelectorAll('input[name="type"]').forEach(radio => {
+      radio.addEventListener('change', updateCategoryOptions);
+    });
+
+    function deleteTransaction(id) {
+      if (confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
+        transactions = transactions.filter(t => t.id !== id);
+        saveTransactions();
+        filterTransactions();
+        updateDashboard();
+      }
+    }
+
+    // ==================== FILTER & SORT ====================
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let sortField = 'date';
+    let sortDirection = 'desc';
+
+    function filterTransactions() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const typeFilter = document.getElementById('typeFilter').value;
+      const categoryFilter = document.getElementById('categoryFilter').value;
+      const dateStart = document.getElementById('dateFilterStart').value;
+      const dateEnd = document.getElementById('dateFilterEnd').value;
+
+      let filtered = transactions.filter(t => {
+        const matchSearch = t.description.toLowerCase().includes(search) || 
+                           t.category.toLowerCase().includes(search);
+        const matchType = typeFilter === 'all' || t.type === typeFilter;
+        const matchCategory = categoryFilter === 'all' || t.category === categoryFilter;
+        const matchDateStart = !dateStart || t.date >= dateStart;
+        const matchDateEnd = !dateEnd || t.date <= dateEnd;
+
+        return matchSearch && matchType && matchCategory && matchDateStart && matchDateEnd;
+      });
+
+      // Sort
+      filtered.sort((a, b) => {
+        let aVal = a[sortField];
+        let bVal = b[sortField];
+        
+        if (sortField === 'amount') {
+          aVal = parseFloat(aVal);
+          bVal = parseFloat(bVal);
+        }
+        
+        if (sortDirection === 'asc') {
+          return aVal > bVal ? 1 : -1;
+        } else {
+          return aVal < bVal ? 1 : -1;
+        }
+      });
+
+      renderTransactions(filtered);
+    }
+
+    function sortTable(field) {
+      if (sortField === field) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortField = field;
+        sortDirection = 'asc';
+      }
+      filterTransactions();
+    }
+
+    function renderTransactions(filtered) {
+      const tbody = document.getElementById('transactionsBody');
+      const totalItems = filtered.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      
+      if (currentPage > totalPages) currentPage = totalPages || 1;
+      
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageItems = filtered.slice(start, end);
+
+      tbody.innerHTML = '';
+      pageItems.forEach(t => {
+        const tr = document.createElement('tr');
+        // Add special styling for investment transfer transactions
+        const isTransferType = t.type === 'transfer' || t.isInvestmentTransfer || t.isInvestmentReturn;
+        const rowClass = isTransferType ? 'investment-transfer' : '';
+        let description = t.description || '-';
+        
+        // Build transfer description with source and destination
+        if (t.type === 'transfer') {
+          const source = t.transferSource || '';
+          const destination = t.transferDestination || t.category;
+          description = `[${source} → ${destination}] ${t.description || ''}`;
+        } else if (t.isInvestmentTransfer) {
+          description = `[Перевод в инвестиции] ${t.description}`;
+        } else if (t.isInvestmentReturn) {
+          description = `[Возврат из инвестиций] ${t.description}`;
+        }
+        
+        const amountSign = isTransferType ? '→' : (t.type === 'income' ? '+' : '-');
+        
+        tr.innerHTML = `
+          <td>${t.date}</td>
+          <td class="${rowClass}">${description}</td>
+          <td><span class="category-badge ${t.type}">${t.category}</span></td>
+          <td class="amount-cell ${t.type} ${rowClass}">${amountSign}${formatCurrency(t.amount)}</td>
+          <td class="${rowClass}">${t.isInvestmentTransfer || t.isIncomeTransfer || t.isIncomeTransferSource ? 'Перевод' : (t.transferSource === 'Инвестиции' || t.transferSource === 'Сбережения') ? 'Возврат' : (t.type === 'transfer' ? 'Перевод' : (t.type === 'income' ? 'Доход' : 'Расход'))}</td>
+          <td>
+            <div class="transaction-actions">
+              <button class="btn-edit" onclick="openEditTransactionModal(${t.id})">Редактировать</button>
+              <button class="btn-delete" onclick="deleteTransaction(${t.id})">Удалить</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Pagination info
+      document.getElementById('paginationInfo').textContent = 
+        `Показано ${start + 1}-${Math.min(end, totalItems)} из ${totalItems} записей`;
+
+      // Pagination buttons
+      const paginationButtons = document.getElementById('paginationButtons');
+      paginationButtons.innerHTML = '';
+      
+      if (totalPages > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'btn-page';
+        prevBtn.textContent = '←';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { currentPage--; filterTransactions(); };
+        paginationButtons.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            const btn = document.createElement('button');
+            btn.className = `btn-page ${i === currentPage ? 'active' : ''}`;
+            btn.textContent = i;
+            btn.onclick = () => { currentPage = i; filterTransactions(); };
+            paginationButtons.appendChild(btn);
+          } else if (i === currentPage - 2 || i === currentPage + 2) {
+            const span = document.createElement('span');
+            span.textContent = '...';
+            paginationButtons.appendChild(span);
+          }
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn-page';
+        nextBtn.textContent = '→';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { currentPage++; filterTransactions(); };
+        paginationButtons.appendChild(nextBtn);
+      }
+    }
+
+    // ==================== DASHBOARD ====================
+    let barChart, donutChart, lineChart, incomeDonutChart, areaChart;
+
+    function getFilteredTransactions(period) {
+      const now = new Date();
+      return transactions.filter(t => {
+        const txnDate = new Date(t.date);
+        switch(period) {
+          case 'current_month':
+            return txnDate.getMonth() === now.getMonth() && txnDate.getFullYear() === now.getFullYear();
+          case 'last_month':
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            return txnDate.getMonth() === lastMonth.getMonth() && txnDate.getFullYear() === lastMonth.getFullYear();
+          case 'last_3_months':
+            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            return txnDate >= threeMonthsAgo;
+          case 'current_year':
+            return txnDate.getFullYear() === now.getFullYear();
+          case 'all_time':
+            return true;
+          default:
+            return true;
+        }
+      });
+    }
+
+    function calculateStats(filtered) {
+      let income = 0;
+      let expense = 0;
+      let balance = 0;
+
+      filtered.forEach(t => {
+        // Handle income transfer sources (transfers from income to savings/investments)
+        if (t.type === 'income' && t.isIncomeTransferSource) {
+          // Subtract from income
+          income -= t.amount;
+        } else if (t.type === 'income') {
+          // Regular income (including returns from savings/investments)
+          income += t.amount;
+        } else if (t.type === 'expense' && !t.isInvestmentTransfer && !t.isIncomeTransfer) {
+          // Exclude investment transfers and income transfers from expense calculation (they are just redistribution)
+          expense += t.amount;
+        }
+        // Transfers do not affect income/expense directly
+      });
+
+      // Calculate total savings from savings array
+      const totalSavings = savings.reduce((sum, s) => sum + s.amount, 0);
+      
+      // Calculate total investments from investments array
+      const totalInvestments = investments.reduce((sum, inv) => sum + inv.amount, 0);
+
+      // Balance = income + savings + investments - expenses
+      balance = income + totalSavings + totalInvestments - expense;
+
+      return { income, expense, balance, savings: totalSavings, investments: totalInvestments };
+    }
+
+    function updateDashboard() {
+      const period = document.getElementById('periodSelect').value;
+      const filtered = getFilteredTransactions(period);
+      const stats = calculateStats(filtered);
+
+      // Update KPI cards
+      document.getElementById('totalBalance').textContent = formatCurrency(stats.balance);
+      document.getElementById('totalIncome').textContent = formatCurrency(stats.income);
+      document.getElementById('totalExpense').textContent = formatCurrency(stats.expense);
+      document.getElementById('totalSavings').textContent = formatCurrency(stats.savings);
+
+      // Update investments total
+      const totalInvestments = investments.reduce((sum, inv) => sum + inv.amount, 0);
+      const investmentsEl = document.getElementById('totalInvestments');
+      if (investmentsEl) {
+        investmentsEl.textContent = formatCurrency(totalInvestments);
+      }
+
+      // Calculate trends (compare to previous period)
+      updateTrends(period);
+
+      // Update charts
+      updateBarChart(filtered);
+      updateDonutChart(filtered);
+    }
+
+    function updateTrends(period) {
+      const now = new Date();
+      let currentPeriod, previousPeriod;
+
+      switch(period) {
+        case 'current_month':
+          currentPeriod = { month: now.getMonth(), year: now.getFullYear() };
+          previousPeriod = { month: now.getMonth() - 1, year: now.getFullYear() };
+          if (previousPeriod.month < 0) {
+            previousPeriod.month = 11;
+            previousPeriod.year--;
+          }
+          break;
+        case 'last_month':
+          currentPeriod = { month: now.getMonth() - 1, year: now.getFullYear() };
+          if (currentPeriod.month < 0) {
+            currentPeriod.month = 11;
+            currentPeriod.year--;
+          }
+          previousPeriod = { month: currentPeriod.month - 1, year: currentPeriod.year };
+          if (previousPeriod.month < 0) {
+            previousPeriod.month = 11;
+            previousPeriod.year--;
+          }
+          break;
+        case 'last_3_months':
+          currentPeriod = { monthsAgo: 3 };
+          previousPeriod = { monthsAgo: 6 };
+          break;
+        case 'current_year':
+          currentPeriod = { year: now.getFullYear() };
+          previousPeriod = { year: now.getFullYear() - 1 };
+          break;
+        default:
+          currentPeriod = null;
+          previousPeriod = null;
+      }
+
+      const getStatsForPeriod = (periodConfig) => {
+        if (!periodConfig) return { income: 0, expense: 0 };
+        
+        return transactions.reduce((acc, t) => {
+          const txnDate = new Date(t.date);
+          let inPeriod = false;
+
+          if (periodConfig.year !== undefined) {
+            inPeriod = txnDate.getFullYear() === periodConfig.year;
+          } else if (periodConfig.monthsAgo !== undefined) {
+            const monthsAgo = periodConfig.monthsAgo;
+            const startDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+            inPeriod = txnDate >= startDate;
+          } else if (periodConfig.month !== undefined) {
+            inPeriod = txnDate.getMonth() === periodConfig.month && txnDate.getFullYear() === periodConfig.year;
+          }
+
+          if (inPeriod) {
+            // Handle income transfer sources (transfers from income to savings/investments)
+            if (t.type === 'income' && t.isIncomeTransferSource) {
+              acc.income -= t.amount;
+            } else if (t.type === 'income') {
+              // Regular income (including returns from savings/investments)
+              acc.income += t.amount;
+            } else if (t.type === 'expense' && !t.isInvestmentTransfer && !t.isIncomeTransfer) {
+              acc.expense += t.amount;
+            }
+          }
+          return acc;
+        }, { income: 0, expense: 0 });
+      };
+
+      const currentStats = getStatsForPeriod(currentPeriod);
+      const previousStats = getStatsForPeriod(previousPeriod);
+
+      const calcTrend = (current, previous) => {
+        if (previous === 0) return 0;
+        return ((current - previous) / previous * 100).toFixed(1);
+      };
+
+      const balanceTrend = calcTrend(currentStats.income - currentStats.expense, previousStats.income - previousStats.expense);
+      const incomeTrend = calcTrend(currentStats.income, previousStats.income);
+      const expenseTrend = calcTrend(currentStats.expense, previousStats.expense);
+
+      document.getElementById('balanceTrendValue').textContent = (balanceTrend >= 0 ? '+' : '') + balanceTrend + '%';
+      document.getElementById('incomeTrendValue').textContent = (incomeTrend >= 0 ? '+' : '') + incomeTrend + '%';
+      document.getElementById('expenseTrendValue').textContent = (expenseTrend >= 0 ? '+' : '') + expenseTrend + '%';
+
+      document.getElementById('balanceTrend').className = 'kpi-trend ' + (balanceTrend >= 0 ? 'positive' : 'negative');
+      document.getElementById('incomeTrend').className = 'kpi-trend ' + (incomeTrend >= 0 ? 'positive' : 'negative');
+      document.getElementById('expenseTrend').className = 'kpi-trend ' + (expenseTrend >= 0 ? 'positive' : 'negative');
+    }
+
+    function getMonthlyData(filtered) {
+      const monthlyData = {};
+      filtered.forEach(t => {
+        const month = t.date.substring(0, 7);
+        if (!monthlyData[month]) {
+          monthlyData[month] = { income: 0, expense: 0 };
+        }
+        // Handle income transfer sources (transfers from income to savings/investments)
+        if (t.type === 'income' && t.isIncomeTransferSource) {
+          monthlyData[month].income -= t.amount;
+        } else if (t.type === 'income') {
+          // Regular income (including returns from savings/investments)
+          monthlyData[month].income += t.amount;
+        } else if (t.type === 'expense' && !t.isInvestmentTransfer && !t.isIncomeTransfer) {
+          monthlyData[month].expense += t.amount;
+        }
+      });
+
+      const sortedMonths = Object.keys(monthlyData).sort();
+      return {
+        months: sortedMonths,
+        income: sortedMonths.map(m => monthlyData[m].income),
+        expense: sortedMonths.map(m => monthlyData[m].expense)
+      };
+    }
+
+    function getCategoryData(filtered, type) {
+      const categoryData = {};
+      filtered.filter(t => t.type === type).forEach(t => {
+        // Exclude investment transfers, income transfers from expense category data
+        if (type === 'expense' && (t.isInvestmentTransfer || t.isIncomeTransfer)) return;
+        // Exclude income transfer sources from income category data
+        if (type === 'income' && t.isIncomeTransferSource) return;
+        categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
+      });
+
+      const categories = Object.keys(categoryData);
+      const values = categories.map(c => categoryData[c]);
+      const total = values.reduce((a, b) => a + b, 0);
+      
+      // Calculate percentages
+      const percentages = categories.map(c => {
+        return total > 0 ? ((categoryData[c] / total) * 100).toFixed(1) : 0;
+      });
+
+      return {
+        categories,
+        values,
+        percentages
+      };
+    }
+
+    // ==================== CHARTS ====================
+    function initCharts() {
+      // Bar Chart
+      const barOptions = {
+        series: [
+          { name: 'Доходы', data: [] },
+          { name: 'Расходы', data: [] }
+        ],
+        chart: {
+          type: 'bar',
+          height: 300,
+          toolbar: { show: false },
+          fontFamily: 'Inter, sans-serif'
+        },
+        colors: ['#10B981', '#EF4444'],
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            borderRadius: 8
+          }
+        },
+        dataLabels: { enabled: false },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        xaxis: { categories: [] },
+        yaxis: {
+          labels: {
+            formatter: (val) => formatCurrency(val)
+          }
+        },
+        fill: { opacity: 1 },
+        tooltip: {
+          marker: { show: false },
+          y: { formatter: (val) => formatCurrency(val) }
+        },
+        legend: { position: 'top' }
+      };
+      barChart = new ApexCharts(document.querySelector("#barChart"), barOptions);
+      barChart.render();
+
+      // Donut Chart (Expenses)
+      const donutOptions = {
+        series: [],
+        chart: {
+          type: 'donut',
+          height: 300,
+          fontFamily: 'Inter, sans-serif'
+        },
+        labels: [],
+        colors: ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#84CC16', '#64748B'],
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '65%',
+              labels: {
+                show: true,
+                name: { color: '#64748B' },
+                value: {
+                  color: '#1E293B',
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  fontFamily: 'Outfit, sans-serif',
+                  formatter: (val) => formatCurrency(parseInt(val))
+                },
+                total: {
+                  show: true,
+                  label: 'Всего',
+                  color: '#64748B',
+                  formatter: (w) => {
+                    const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                    return formatCurrency(total);
+                  }
+                }
+              }
+            }
+          }
+        },
+        legend: {
+          position: 'bottom',
+          fontSize: '13px',
+          formatter: function(legendName, opts) {
+            const value = opts.w.globals.series[opts.seriesIndex];
+            const total = opts.w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return legendName + ' - ' + percentage + '%';
+          }
+        },
+        dataLabels: { enabled: false },
+        tooltip: {
+          marker: { show: false },
+          y: { 
+            formatter: function(val, opts) {
+              // При первой инициализации с пустыми данными globals может быть undefined
+              if (!opts?.w?.globals?.seriesTotals) {
+                return formatCurrency(val);
+              }
+              const total = opts.w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+              return formatCurrency(val) + ' (' + percentage + '%)';
+            }
+          }
+        }
+      };
+      donutChart = new ApexCharts(document.querySelector("#donutChart"), donutOptions);
+      donutChart.render();
+
+      // Line Chart (Trends)
+      const lineOptions = {
+        series: [
+          { name: 'Доходы', data: [] },
+          { name: 'Расходы', data: [] }
+        ],
+        chart: {
+          height: 300,
+          type: 'line',
+          toolbar: { show: false },
+          fontFamily: 'Inter, sans-serif'
+        },
+        colors: ['#10B981', '#EF4444'],
+        stroke: { curve: 'smooth', width: 3 },
+        xaxis: { categories: [] },
+        yaxis: {
+          labels: {
+            formatter: (val) => formatCurrency(val)
+          }
+        },
+        markers: { size: 4 },
+        tooltip: {
+          marker: { show: false },
+          y: { formatter: (val) => formatCurrency(val) }
+        },
+        legend: { position: 'top' }
+      };
+      lineChart = new ApexCharts(document.querySelector("#lineChart"), lineOptions);
+      lineChart.render();
+
+      // Income Donut
+      const incomeDonutOptions = {
+        series: [],
+        chart: {
+          type: 'donut',
+          height: 300,
+          fontFamily: 'Inter, sans-serif'
+        },
+        labels: [],
+        colors: ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5'],
+        legend: { position: 'bottom', fontSize: '13px' },
+        dataLabels: { enabled: false },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '60%'
+            }
+          }
+        },
+        tooltip: {
+          marker: { show: false },
+          y: { formatter: (val) => formatCurrency(val) }
+        }
+      };
+      incomeDonutChart = new ApexCharts(document.querySelector("#incomeDonutChart"), incomeDonutOptions);
+      incomeDonutChart.render();
+
+      // Area Chart
+      const areaOptions = {
+        series: [
+          { name: 'Расходы', data: [] }
+        ],
+        chart: {
+          height: 300,
+          type: 'area',
+          toolbar: { show: false },
+          fontFamily: 'Inter, sans-serif'
+        },
+        colors: ['#6366F1'],
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.5,
+            opacityTo: 0.1,
+            stops: [0, 100]
+          }
+        },
+        stroke: { curve: 'smooth', width: 2 },
+        xaxis: { categories: [] },
+        yaxis: {
+          labels: {
+            formatter: (val) => formatCurrency(val)
+          }
+        },
+        tooltip: {
+          marker: { show: false },
+          y: { formatter: (val) => formatCurrency(val) }
+        }
+      };
+      areaChart = new ApexCharts(document.querySelector("#areaChart"), areaOptions);
+      areaChart.render();
+    }
+
+    function updateBarChart(filtered) {
+      const monthlyData = getMonthlyData(filtered);
+      
+      const months = monthlyData.months.map(m => {
+        const [year, month] = m.split('-');
+        const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+        return monthNames[parseInt(month) - 1] + ' ' + year.slice(2);
+      });
+
+      barChart.updateOptions({
+        xaxis: { categories: months }
+      });
+      barChart.updateSeries([
+        { name: 'Доходы', data: monthlyData.income },
+        { name: 'Расходы', data: monthlyData.expense }
+      ]);
+    }
+
+    function updateDonutChart(filtered) {
+      const categoryData = getCategoryData(filtered, 'expense');
+      
+      donutChart.updateOptions({
+        labels: categoryData.categories
+      });
+      donutChart.updateSeries(categoryData.values);
+    }
+
+    function updateAnalytics() {
+      const period = document.getElementById('analyticsPeriodSelect').value;
+      const filtered = getAnalyticsFilteredTransactions(period);
+      
+      updateLineChart(filtered);
+      updateIncomeDonutChart(filtered);
+      updateAreaChart(filtered);
+    }
+
+    function getAnalyticsFilteredTransactions(period) {
+      const now = new Date();
+      return transactions.filter(t => {
+        const txnDate = new Date(t.date);
+        switch(period) {
+          case 'current_year':
+            return txnDate.getFullYear() === now.getFullYear();
+          case 'last_year':
+            return txnDate.getFullYear() === now.getFullYear() - 1;
+          case 'all_time':
+            return true;
+          default:
+            return true;
+        }
+      });
+    }
+
+    function updateLineChart(filtered) {
+      const monthlyData = getMonthlyData(filtered);
+      
+      const months = monthlyData.months.map(m => {
+        const [year, month] = m.split('-');
+        const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+        return monthNames[parseInt(month) - 1];
+      });
+
+      lineChart.updateOptions({
+        xaxis: { categories: months }
+      });
+      lineChart.updateSeries([
+        { name: 'Доходы', data: monthlyData.income },
+        { name: 'Расходы', data: monthlyData.expense }
+      ]);
+    }
+
+    function updateIncomeDonutChart(filtered) {
+      const categoryData = getCategoryData(filtered, 'income');
+      
+      incomeDonutChart.updateOptions({
+        labels: categoryData.categories
+      });
+      incomeDonutChart.updateSeries(categoryData.values);
+    }
+
+    function updateAreaChart(filtered) {
+      const monthlyData = getMonthlyData(filtered);
+      
+      const months = monthlyData.months.map(m => {
+        const [year, month] = m.split('-');
+        const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+        return monthNames[parseInt(month) - 1];
+      });
+
+      areaChart.updateOptions({
+        xaxis: { categories: months }
+      });
+      areaChart.updateSeries([
+        { name: 'Расходы', data: monthlyData.expense }
+      ]);
+    }
+
+    function updateChartsTheme() {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      const textColor = isDark ? '#F1F5F9' : '#1E293B';
+      const gridColor = isDark ? '#334155' : '#E2E8F0';
+
+      const chartOptions = {
+        xaxis: {
+          labels: { style: { colors: textColor } },
+          axisBorder: { color: gridColor },
+          axisTicks: { color: gridColor }
+        },
+        yaxis: {
+          labels: { style: { colors: textColor } }
+        }
+      };
+
+      if (barChart) barChart.updateOptions(chartOptions);
+      if (donutChart) donutChart.updateOptions(chartOptions);
+      if (lineChart) lineChart.updateOptions(chartOptions);
+      if (incomeDonutChart) incomeDonutChart.updateOptions(chartOptions);
+      if (areaChart) areaChart.updateOptions(chartOptions);
+    }
+
+    // ==================== EXPORT ====================
+    function exportToExcel() {
+      const ws = XLSX.utils.json_to_sheet(transactions.map(t => ({
+        'Дата': t.date,
+        'Тип': t.isInvestmentTransfer || t.isIncomeTransfer || t.isIncomeTransferSource ? 'Перевод' : (t.transferSource === 'Инвестиции' || t.transferSource === 'Сбережения') ? 'Возврат' : (t.type === 'transfer' ? 'Перевод' : (t.type === 'income' ? 'Доход' : 'Расход')),
+        'Категория': t.category,
+        'Сумма': t.amount,
+        'Описание': t.description
+      })));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Транзакции");
+      XLSX.writeFile(wb, `finance_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function exportToPDF() {
+      // jsPDF UMD exposes the constructor at window.jspdf.jsPDF or window.jsPDF
+      const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+      if (!jsPDF) {
+        console.error('jsPDF library not loaded');
+        alert('PDF export is not available. Please refresh the page and try again.');
+        return;
+      }
+      const doc = new jsPDF();
+
+      doc.setFontSize(20);
+      doc.text('Финансовый отчёт', 20, 20);
+
+      doc.setFontSize(12);
+      let y = 40;
+
+      const stats = calculateStats(transactions);
+      doc.text(`Общий баланс: ${formatCurrency(stats.balance)}`, 20, y);
+      doc.text(`Доходы: ${formatCurrency(stats.income)}`, 20, y + 10);
+      doc.text(`Расходы: ${formatCurrency(stats.expense)}`, 20, y + 20);
+      doc.text(`Сбережения: ${formatCurrency(stats.savings)}`, 20, y + 30);
+
+      y += 50;
+      doc.text('Последние транзакции:', 20, y);
+      y += 10;
+
+      transactions.slice(0, 20).forEach(t => {
+        const type = t.isInvestmentTransfer || t.isIncomeTransfer || t.isIncomeTransferSource ? 'Перевод' : (t.transferSource === 'Инвестиции' || t.transferSource === 'Сбережения') ? 'Возврат' : (t.type === 'transfer' ? 'Перевод' : (t.type === 'income' ? 'Доход' : 'Расход'));
+        const text = `${t.date} - ${type} - ${t.category} - ${formatCurrency(t.amount)}`;
+        doc.text(text, 20, y);
+        y += 8;
+      });
+
+      doc.save(`finance_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load theme
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+      }
+
+      // Load transactions
+      loadTransactions();
+
+      // Load investments
+      loadInvestments();
+      
+      // Load savings
+      loadSavings();
+
+      // Initialize charts
+      initCharts();
+
+      // Update dashboard
+      updateDashboard();
+    });
+  </script>
+</body>
+</html>
